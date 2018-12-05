@@ -2,13 +2,26 @@ from collections import defaultdict, namedtuple
 from datetime import datetime as dt, timedelta
 
 import pandas as pd
+df = pd.read_csv('day4_input.txt', sep='] ', engine='python', names=[
+                 'date', 'action'])
+df['date'] = df.date.str[1:]
+df.date = df.date.apply(lambda x: dt.strptime(x, '%Y-%m-%d %H:%M'))
+df.head()
+df.date.sort_values()
+df.index = df.date
+df.sort_index()
+df = df.sort_index()
+df.to_csv('day4_formatted.txt',header=False)
 
 test_file_name = 'day4_test_case.txt'
 file_name = 'day4_input.txt'
 event_log = namedtuple('EventLog', ['time','event'])
 
 def corrected_date(event: tuple):
-    date = dt.strptime(event[0][1:], '%Y-%m-%d %H:%M')
+    try:
+        date = dt.strptime(event[0][1:], '%Y-%m-%d %H:%M')
+    except ValueError:
+        date = dt.strptime(event[0][1:], '%Y-%m-%d %H:%M:%S')
     if date.hour==23:
         new_date = date + timedelta(days=1)
         str_date = str(new_date.date())
@@ -17,20 +30,28 @@ def corrected_date(event: tuple):
         date = dt.strptime(str(date.date()) + " 00:00", '%Y-%m-%d %H:%M')
     return date
 
-def load_format(file_name: str):
-    file_object = open(file_name, 'r')
-    loaded = file_object.read()
-    split_s = loaded.split('\n')
-    current_events = [x.split('] ') for x in split_s ]
-    formatted_events = [event_log(corrected_date(x), x[1])
-                         for x in current_events ]
+def load_format(file_name: str, use_pandas=True):
+    if not use_pandas:
+        file_object = open(file_name, 'r')
+        loaded = file_object.read()
+        split_s = loaded.split('\n')
+        current_events = [x.split('] ') for x in split_s]
+        formatted_events = [event_log(corrected_date(x), x[1])
+                            for x in current_events]
+    else:
+        df = pd.read_csv(file_name, sep=',', engine='python', names=[
+            'date', 'action'])
+        current_dict = df.apply(lambda row: event_log('$' + row[0], row[1]),axis=1).values
+        formatted_events = [event_log(corrected_date(x), x[1])
+                            for x in current_dict]
+
     return formatted_events
 
-formatted_log = load_format(test_file_name)
+# formatted_log = load_format('day4_formatted.txt', use_pandas=True)
 # print(formatted_log)
 
+
 def pad_awake_list(asleep_list):
-    # import ipdb; ipdb.set_trace()
     flat_list = [item for sublist in asleep_list for item in sublist]
     if len(flat_list) < 60:
         diff = 60 - len(flat_list)
@@ -55,18 +76,20 @@ def preprocessing(file_name: str):
         tasleep = 0
         tawake = 0
         events = structured_dict[k]
-        # import ipdb; ipdb.set_trace()
+        if len(events)==1:
+            dict_asleep_patterns[k].append([0] * 60)
         for e in events:
             if e.event.startswith('Guard'):
                 prev_time = e.time
+                last_event_guard = True
             delta = e.time - prev_time
-            if e.event == 'falls asleep' and awake==True:
+            if e.event == 'falls asleep':
                 awake = False
                 dict_asleep_patterns[k].append([
                     0] * (int(delta.total_seconds() / 60)))
                 tawake += delta.total_seconds() / 60
                 prev_time = e.time
-            if e.event == 'wakes up' and awake==False:
+            if e.event == 'wakes up':
                 awake = True
                 dict_asleep_patterns[k].append([
                     1] * (int(delta.total_seconds() / 60) ))
@@ -74,12 +97,12 @@ def preprocessing(file_name: str):
                 prev_time = e.time
         
         guard_id = k.split('-')[0]
-        structured_dict[k].append(struct_sum(tawake, tasleep))
+        # structured_dict[k].append(struct_sum(tawake, tasleep))
         sum_dict[guard_id].append(struct_sum(tawake, tasleep))
     
     useful_list = [pad_awake_list(dict_asleep_patterns[x]) for x in dict_asleep_patterns.keys()]
     df = pd.DataFrame(useful_list)
-    import ipdb; ipdb.set_trace()
+    structured_list = list(structured_dict.keys())
     df.index = structured_dict.keys()
     return sum_dict, df
 
@@ -113,9 +136,11 @@ def day_four(file_name: str):
     return most_asleep_min * most_asleep_guard_result
 
 
+file_name = 'day4_formatted.txt'
 # print(day_four(test_final, test_df))
 print(day_four(file_name))
 
 TARGET_ID = 10 
 TARGET_MINUTE = 24 
-print(day_four(final, df) == TARGET_ID*TARGET_MINUTE)
+# print(day_four(final, df) == TARGET_ID*TARGET_MINUTE)
+
