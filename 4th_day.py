@@ -60,7 +60,7 @@ def pad_awake_list(asleep_list):
         return flat_list
 
 def preprocessing(file_name: str):
-    formatted_log = load_format(file_name)
+    formatted_log = load_format(file_name, use_pandas=False)
     structured_dict = defaultdict(list)
     for e in formatted_log:
         if e.event.startswith('Guard'):
@@ -129,6 +129,7 @@ def most_asleep_guard(final: dict):
 
 def day_four(file_name: str):
     final, df = preprocessing(file_name)
+    import ipdb; ipdb.set_trace()
     most_asleep_guard_result = most_asleep_guard(final)
     # # PLACEHOLDER MISSING MOST LIKLEY MIN
     shifts_most_asleep_guard = df[df.index.str[1:].str.startswith(str(most_asleep_guard_result))]
@@ -138,9 +139,37 @@ def day_four(file_name: str):
 
 file_name = 'day4_formatted.txt'
 # print(day_four(test_final, test_df))
-print(day_four(file_name))
+# print(day_four(test_file_name))
 
 TARGET_ID = 10 
 TARGET_MINUTE = 24 
 # print(day_four(final, df) == TARGET_ID*TARGET_MINUTE)
 
+"""
+Strategy 2: Of all guards, which guard is most frequently asleep on the same minute?
+
+In the example above, Guard #99 spent minute 45 asleep more than any other guard or minute - three times in total.
+(In all other cases, any guard spent any minute asleep at most twice.)
+
+What is the ID of the guard you chose multiplied by the minute you chose? (In the above example, the answer would be 99 * 45 = 4455.)
+
+"""
+part2_file = 'formatted_data_4.csv'
+part2_test_file = 'formatted_data_test_4.csv'
+
+
+def part_two(file_name: str):
+    new_df = pd.read_csv(file_name)
+    new_df.columns = ['id'] + list(range(60))
+    new_df['guard'] = new_df.id.str.split('-').str[0]
+    minute_counts = new_df.groupby('guard').sum().max(axis=0)
+    max_count = new_df.groupby('guard').sum().max(axis=0).max()
+    max_minute = minute_counts[minute_counts == max_count].index[0]
+    max_minute_col = new_df.groupby('guard').sum()[max_minute]
+    max_minute_guard_id = int(
+        max_minute_col[max_minute_col == max_count].index[0][1:])
+    return max_minute_guard_id * max_minute
+
+
+print(part_two(part2_test_file) == 4455)
+print(part_two(part2_file)) 
