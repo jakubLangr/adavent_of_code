@@ -32,25 +32,22 @@ G = list_to_graph(test_case)
 
 def graph_to_order(graph):
     '''
-    [('C', {'A': {}, 'F': {}}),
-    ('A', {'B': {}, 'D': {}}),
-    ('F', {'E': {}}),
-    ('B', {'E': {}}),
-    ('D', {'E': {}}),
-    ('E', {})]
+     {'C': ['A', 'F'], 'A': ['B', 'D'], 'B': ['E']}
     '''
-    adj_list = list(G.adjacency())[::-1]
-    final_order = adj_list[0][0]
-    first_check = True
-    for node in adj_list:
-        adj_nodes = sorted(list(node[1].keys()))[::-1]
-        checked_nodes = [ x for x in adj_nodes if x not in final_order ]
-        first_check = False
-        final_order += ''.join(checked_nodes)
+    # TODO: Maybe perform a check we are indeed at the start node
+    dfs_results = nx.dfs_successors(G)
+    final_order = list(dfs_results)[0][0]
+    for key in dfs_results.keys():
+        adj_nodes = sorted(dfs_results[key])
+        for node in adj_nodes:
+            import ipdb
+            ipdb.set_trace()
+            if node in final_order:
+                final_order = final_order.replace(node, '')
+        final_order += ''.join(adj_nodes)
 
-    final_order += adj_list[-1][0]
-    
-    return final_order[::-1]
+    return final_order
+
 
 
 result = graph_to_order(test_case)
