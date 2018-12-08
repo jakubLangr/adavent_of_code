@@ -99,3 +99,8 @@ results_dict = defaultdict(lambda: str)
 for id in unique_ids:
     number = df3[df3.id1 == id].overlap_num.sum()
     results_dict[str(id)] = number
+
+df4 = pd.DataFrame(results_dict, index=['num_overlap']).T]
+# we can do this as same dimensions of df and df4 
+df4['num_area'] = df.dims_list.apply(lambda x: int(x[0])*int(x[1])).values
+df4['overlap_amount'] = df4.num_overlap - df4.num_area
