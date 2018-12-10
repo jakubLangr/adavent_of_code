@@ -3,34 +3,29 @@ from typing import List
 case = list(map(int, case.split() ))
 print(case)
 
-final_case = list(map(int, open('day8_input.txt').read().split()))
-
-class Tree:
-    num_children: int 
-    num_metadata: int
-    children: List['Node']
-    metadata: List[int]
-
-    def __init__(self, ns):
-        self.i = 0
-        self.ns = ns
-
-    def next_int(self):
-        self.i += 1
-        return self.ns[self.i-1]
-
-    def read_tree(self):
-        nn, nm = self.next_int(), self.next_int()
-        children = []
-        metadata = []
-        for _ in range(nn):
-            children.append(self.read_tree())
-        for _ in range(nm):
-            metadata.append(self.next_int())
-        return children, metadata
 
 
-def sum_metadata(children, metadata):
+i = 0 
+
+def next_int():
+    global i 
+    global case 
+    i += 1
+    return case[i-1]
+
+def read_tree():
+    nn, nm = next_int(), next_int()
+    children = []
+    metadata = []
+    for _ in range(nn):
+        children.append(read_tree())
+    for _ in range(nm):
+        metadata.append(next_int())
+    return (children, metadata)
+
+
+def sum_metadata(tuple):
+    children, metadata = tuple
     ans= 0
     if not isinstance(metadata, list):
         metadata = [metadata]
@@ -39,12 +34,29 @@ def sum_metadata(children, metadata):
     for m in list(metadata):
         ans += m
     for c in list(children):
-        ans += sum_metadata(c,m)
+        ans += sum_metadata(c)
     return ans
 
+def value(tuple):
+    children, metadata = tuple
+    if not children:
+        return sum(metadata)
+    else:
+        ans = 0
+        for m in metadata:
+            if 1 <= m <= len(children):
+                ans += value(children[m-1])
 
-children, metadata = Tree(case).read_tree()
-print(sum_metadata(children, metadata))
+        return ans
 
-children, metadata = Tree(final_case).read_tree()
-print(sum_metadata(children, metadata))
+
+root = read_tree()
+print(sum_metadata(root))
+print(value(root))
+
+i = 0 
+case = list(map(int, open('day8_input.txt').read().split()))
+ 
+root = read_tree()
+print(sum_metadata(root))
+print(value(root))

@@ -72,7 +72,6 @@ def graph_to_order(graph):
     while progress != []:
         init_key = progress.pop(0)
         key_list, done = next_valid_move(graph, init_key, reqs, done)
-        import ipdb; ipdb.set_trace()
         if len(key_list)==1:
             final_order += key_list[0]
         elif len(key_list)>1:
