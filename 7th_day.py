@@ -83,6 +83,26 @@ def graph_to_order(graph):
     print(final_order)
     return final_order
 
+def solution(graph):
+    reqs = construct_requirements(graph)
+    valid_options = sorted([ k for k in reqs.keys() if reqs[k]==[]])
+    done = []
+    
+    while valid_options!=[]:
+        choice = valid_options.pop(0)
+        graph.remove_node(choice)
+        done += choice
+        for k in list(graph.nodes):
+            if check_requirements(reqs, k, done):
+                valid_options.append(k)
+        
+        valid_options = list(set(valid_options))
+        valid_options.sort()
+        
+    done = ''.join(done)
+    return done
+    
+
 def part_one(file_name: str):
     loaded = load(file_name)
     graph = list_to_graph(loaded)
@@ -92,7 +112,7 @@ def part_one(file_name: str):
 
 
 G = list_to_graph(test_case)
-assert graph_to_order(G) == "CABDFE"
+assert solution(G) == "CABDFE"
 file_name = 'day7_input.txt'
 
 prev_guesses = [
@@ -102,10 +122,61 @@ prev_guesses = [
     'HPDTNXYLOCGESIMAZKRUWQBVFJ'
 ]
 
-
-result = part_one(file_name)
+loaded_file = load(file_name)
+graph = list_to_graph(loaded_file)
+result = solution(graph)
 assert result not in prev_guesses
-assert result.startswith('HPDTNX')
+# assert result.startswith('HPDTNX')
+
+def effort(step: str, base: int = 60):
+    return ord(step) - ord("A") + base + 1
+
+assert effort('Z') == 86
+assert effort("C", base=0) == 3
 
 print('Checks passed.')
-print(result)
+
+class WorkItem:
+    worker: int
+    item: str
+    start_time: int
+    end_time: int
+
+
+def part_two(graph, num_workers: int, base: int = 60):
+    '''
+    NOT DONE YET
+    '''
+    reqs = construct_requirements(graph)
+    valid_options = sorted([ k for k in reqs.keys() if reqs[k]==[]])
+    done = []
+    time = 0
+    work_items = '?'
+    
+    while valid_options!=[]:
+        # done?
+        for work_item in work_items:
+            if work_item and work_item.end_time <= time:
+                pass
+        
+        choice = valid_options.pop(0)
+        graph.remove_node(choice)
+        done += choice
+        for k in list(graph.nodes):
+            if check_requirements(reqs, k, done):
+                valid_options.append(k)
+        
+        valid_options = list(set(valid_options))
+        valid_options.sort()
+        available_workers = [ i for i in range(num_workers)
+                              if i is None]
+        
+        while available_workers and valid_options:
+            worker_id = available_workers.pop()
+        
+    done = ''.join(done)
+    return done
+
+
+
+

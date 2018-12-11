@@ -4,7 +4,10 @@ import string
 import matplotlib.pylab as plt
 from scipy import sparse
 
-TESTING = True
+from pylab import rcParams
+rcParams['figure.figsize'] = 10, 15
+
+TESTING = False
 REAL = not TESTING
 
 test_input = [
@@ -70,15 +73,21 @@ def parse_file(inputs: list):
 
 
 def construct_mat(ud, target_range):
-    msg_matrix = np.zeros((target_range, target_range), dtype='object')
+    msg_matrix = np.zeros((int(target_range), target_range), dtype=np.uint8)
     for k in ud.keys():
         x,y,d_x,d_y = ud[k]
-        msg_matrix[x,y] = k
-    return msg_matrix
+        try:
+            msg_matrix[x,y] = 1
+        except IndexError:
+            pass
+    sparse_df = pd.DataFrame(msg_matrix).to_sparse()
+    # sparse_mat = sparse_df.as_matrix()
+    return sparse_df
 
 
 
-def plot_matrix(mat): 
+def plot_matrix(ud, target_range): 
+    mat = construct_mat(ud, target_range)
     to_int = lambda x: 1 if isinstance(x, str) else x
     vto_int = np.vectorize(to_int)
     num_array = vto_int(mat)
@@ -90,21 +99,28 @@ def plot_matrix(mat):
 
 # print(msg_matrix)
 
-def update_matrix(msg_matrix, ud, target_range):
+def update_matrix(ud, target_range):
     for k in ud.keys():
         x,y,d_x,d_y = ud[k]
         new_x = x + d_x
         new_y = y + d_y
+        if new_x == 0:
+            exit()
+        if new_y == 0:
+            exit()
         ud[k] = new_x, new_y, d_x, d_y
-        msg_matrix = construct_mat(ud, target_range)
-    return msg_matrix, ud
+        # msg_matrix = construct_mat(ud, target_range)
+    return ud
     
 
-def find_msg(curr_epoch, ud, target_range, num_iter=5):
+def find_msg(ud, target_range, num_iter=int(5e4)):
     for i in range(num_iter):
-        curr_epoch, ud = update_matrix(curr_epoch, ud, target_range)
-        curr_n = plot_matrix(curr_epoch)
-
+        ud = update_matrix(ud, target_range)
+        if i > 10000:
+            global curr_n
+            curr_n = plot_matrix(ud, target_range)
+        print(i)
+            
 if TESTING:
     ud, target_range = parse_file(test_input)
     msg_matrix = construct_mat(ud, target_range)
@@ -113,9 +129,6 @@ if TESTING:
 if REAL:
     real_input = open('day10_input.txt','r').read().split('\n')
     ud, target_range = parse_file(real_input)
-    curr_epoch = construct_mat(ud, target_range)
-    # find_msg(msg_matrix, ud, target_range)
-    
-    num_iter = 1
-    curr_epoch, ud = update_matrix(curr_epoch, ud, target_range)
-    curr_n = plot_matrix(curr_epoch)
+    target_range = int(target_range / 256)
+    # curr_epoch = construct_mat(ud, target_range)
+    find_msg( ud, target_range)
