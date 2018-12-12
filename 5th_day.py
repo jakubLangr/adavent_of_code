@@ -1,7 +1,5 @@
 
 
-from builtins import IndexError
-
 
 def naive_shrink(polymer: str) -> str:
     while True:
@@ -25,7 +23,27 @@ def naive_shrink(polymer: str) -> str:
         if no_reactions==0:
             return new_polymber
 
+polymer = test_case = 'dabAcCaCBAcCcaDA'
+stack = []
+for c in polymer[1:]:
+    if len(stack)!=0: pp = stack[-1]
+    if stack and c.upper()==pp.upper() and c!=pp:
+        stack.pop()
+    else:
+        stack.append(c)
 
-test_case = 'dabAcCaCBAcCcaDA'
-print(naive_shrink(test_case) == 'dabCBAcaDA') 
-print(naive_shrink(test_case))
+ss = ''.join(stack)
+print(ss.endswith('abCBAcaDA'))
+# print(naive_shrink(test_case) == 'dabCBAcaDA') 
+polymer = open('day5_input.txt').read().strip()
+
+
+stack = []
+for c in polymer[1:]:
+    if len(stack)!=0: pp = stack[-1]
+    if stack and c.upper()==pp.upper() and c!=pp:
+        stack.pop()
+    else:
+        stack.append(c)
+
+print(len(stack))
