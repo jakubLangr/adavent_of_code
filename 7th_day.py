@@ -1,4 +1,7 @@
 import networkx as nx
+from collections import namedtuple
+from typing import NamedTuple
+import ipdb
 
 def load(file_name: str):
     file_object = open(file_name, 'r')
@@ -113,7 +116,7 @@ def part_one(file_name: str):
 
 G = list_to_graph(test_case)
 assert solution(G) == "CABDFE"
-file_name = 'day7_input.txt'
+
 
 prev_guesses = [
     'YLOPDTQSXCMGHNEIABZKRWVUFJ',
@@ -122,6 +125,7 @@ prev_guesses = [
     'HPDTNXYLOCGESIMAZKRUWQBVFJ'
 ]
 
+file_name = 'day7_input.txt'
 loaded_file = load(file_name)
 graph = list_to_graph(loaded_file)
 result = solution(graph)
@@ -137,10 +141,32 @@ assert effort("C", base=0) == 3
 print('Checks passed.')
 
 class WorkItem:
-    worker: int
-    item: str
-    start_time: int
-    end_time: int
+    def __init__(self, worker, start_time, item,
+                 end_time, remaining):
+        self.worker = worker
+        self.item = item
+        self.start_time = start_time
+        self.end_time = end_time
+        self.remaining = remaining
+    
+    def __repr__(self):
+        return f"(Worker: {self.worker}, Item: {self.item}, \
+Start: {self.start_time}, End: {self.end_time}, Remain: {self.remaining})"
+        
+    def step(self):
+        self.remaining -= 1
+        return self
+        
+def allocate_work(valid_options, workers, time, base):
+    i = 0
+    while valid_options!=[] and not all(workers):
+        item = valid_options.pop(0)
+        work_item = WorkItem(worker=i, start_time=time, item=item, 
+                             end_time=time+effort(item, base), 
+                             remaining=effort(item, base))
+        workers[i] =  work_item
+        i += 1 
+    return valid_options, workers
 
 
 def part_two(graph, num_workers: int, base: int = 60):
@@ -149,34 +175,53 @@ def part_two(graph, num_workers: int, base: int = 60):
     '''
     reqs = construct_requirements(graph)
     valid_options = sorted([ k for k in reqs.keys() if reqs[k]==[]])
+    tracked_work = {}
     done = []
-    time = 0
-    work_items = '?'
+    workers = [ False for x in range(num_workers)]
+    time = 0    
     
-    while valid_options!=[]:
-        # done?
-        for work_item in work_items:
-            if work_item and work_item.end_time <= time:
-                pass
+    while len(done)!=len(reqs.keys()):
+        # check if there's avail items or workers
+        if valid_options!=[] and False in workers:
+            valid_options, workers = allocate_work(valid_options, workers, time, base)
         
-        choice = valid_options.pop(0)
-        graph.remove_node(choice)
-        done += choice
-        for k in list(graph.nodes):
-            if check_requirements(reqs, k, done):
-                valid_options.append(k)
+        # update prev workitem effort
+        workers = [ wi.step() if wi is not False else False for wi in workers ]
+        # check if node has been done
+        tracked_work[ str(time) ] = workers
+        # done nodes move to done:
+        for i, w in enumerate(workers): 
+            # keep track for analysis
+            # delete all done items
+            if w:
+                if w.remaining==0:
+                    # add to done
+                    done.append(w.item)
+                    graph.remove_node(w.item)
+                    # if time==8: ipdb.set_trace()
+                    # set worker as free
+                    workers[i] = False
+                    for k in list(graph.nodes):
+                        if check_requirements(reqs, k, done):
+                            valid_options.append(k)
         
-        valid_options = list(set(valid_options))
-        valid_options.sort()
-        available_workers = [ i for i in range(num_workers)
-                              if i is None]
-        
-        while available_workers and valid_options:
-            worker_id = available_workers.pop()
+        valid_options = set(valid_options)
+        valid_options = valid_options.difference(set(done))
+        worked_items = set([ w.item for w in workers if w is not False ])
+        valid_options = list(valid_options.difference(worked_items))
+        valid_options.sort() 
+                    
+        time += 1 
         
     done = ''.join(done)
-    return done
+    return done, tracked_work
 
 
+G = list_to_graph(test_case)
+done, tracked_work = part_two(G, num_workers=2, base=0)
 
-
+file_name = 'day7_input.txt'
+loaded_file = load(file_name)
+graph = list_to_graph(loaded_file)
+done, work = part_two(graph, num_workers=5, base=60)
+print(work)
