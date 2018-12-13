@@ -37,13 +37,27 @@ print(ss.endswith('abCBAcaDA'))
 # print(naive_shrink(test_case) == 'dabCBAcaDA') 
 polymer = open('day5_input.txt').read().strip()
 
+def reducle_polymer(polymer: str) -> dict:
+    results = {}
+    all_letters = set(polymer)
+    reference_p = polymer
+    for l in all_letters:
+        polymer  = reference_p 
+        stack = []
+        polymer = polymer.replace(l.lower(),'')
+        polymer = polymer.replace(l.upper(),'')
 
-stack = []
-for c in polymer[1:]:
-    if len(stack)!=0: pp = stack[-1]
-    if stack and c.upper()==pp.upper() and c!=pp:
-        stack.pop()
-    else:
-        stack.append(c)
+        for c in polymer[1:]:
+            if len(stack)!=0: pp = stack[-1]
+            if stack and c.upper()==pp.upper() and c!=pp:
+                stack.pop()
+            else:
+                stack.append(c)
+        
+        results[l] = len(stack)
+    import operator
+    results = sorted(results.items(), key=operator.itemgetter(1))
+    return results
 
-print(len(stack))
+print(reducle_polymer(test_case))
+print(reducle_polymer(polymer))
