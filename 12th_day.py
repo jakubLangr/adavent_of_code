@@ -24,7 +24,6 @@ rules = """...## => #
 ####. => #""" 
 
 rules_dict = {}
-
 rules = rules.split('\n')
 
 for r in rules:
