@@ -92,6 +92,26 @@ ans = [x - 20 for x in find(next_step) ]
 print(sum(ans))
 assert sum(ans)==3061
 
-prev_guesses = [705, 3059, 3115, 3003] # 3115 too high 
+NUM_TILL_STABLE = 200
 
+next_step = working_state
+for i in range(NUM_TILL_STABLE):
+    next_step = evolve(next_step, full_rules)
+    #print(next_step)
+    # print(find(next_step[i:-i]))
+    
+ans = [x - NUM_TILL_STABLE for x in find(next_step) ]
 
+current_guess = sum(ans) + 81 * (50_000_000_000 - NUM_TILL_STABLE)
+print(current_guess )
+
+assert current_guess > 2100000022575
+
+prev2 = [50001213530, # too low
+         2100000006375,
+         2100000022575, # too low 
+         2099999994661, 
+         4050000014775,
+         4050000079575] 
+
+assert current_guess not in prev2
